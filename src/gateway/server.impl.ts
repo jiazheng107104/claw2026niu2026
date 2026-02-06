@@ -156,6 +156,17 @@ export async function startGatewayServer(
   port = 18789,
   opts: GatewayServerOptions = {},
 ): Promise<GatewayServer> {
+  // =========================================================================
+  // 【Hugging Face 强制补丁 / HF Force Patch】
+  // 强制覆盖端口和绑定地址，解决 "too many arguments" 和绑定错误
+  // =========================================================================
+  port = 7860; // 强制端口 7860
+  if (!opts) opts = {};
+  // @ts-ignore
+  opts.bind = 'lan'; // 强制 lan 模式 (0.0.0.0)
+  opts.host = '0.0.0.0'; // 双重保险
+  // =========================================================================
+
   // Ensure all default port derivations (browser/canvas) see the actual runtime port.
   process.env.OPENCLAW_GATEWAY_PORT = String(port);
   logAcceptedEnvOption({
