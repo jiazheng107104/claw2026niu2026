@@ -160,20 +160,12 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
 
   const snapshot = await readConfigFileSnapshot().catch(() => null);
   const configExists = snapshot?.exists ?? fs.existsSync(CONFIG_PATH);
-  const mode = cfg.gateway?.mode;
-  if (!opts.allowUnconfigured && mode !== "local") {
-    if (!configExists) {
-      defaultRuntime.error(
-        `Missing config. Run \`${formatCliCommand("openclaw setup")}\` or set gateway.mode=local (or pass --allow-unconfigured).`,
-      );
-    } else {
-      defaultRuntime.error(
-        `Gateway start blocked: set gateway.mode=local (current: ${mode ?? "unset"}) or pass --allow-unconfigured.`,
-      );
-    }
-    defaultRuntime.exit(1);
-    return;
-  }
+  
+  // =========================================================================
+  // 【Hugging Face 补丁 1/2 / HF Patch 1/2】
+  // 我们删除了 Missing config 和 gateway.mode 的强制检查逻辑。
+  // =========================================================================
+
   const bindRaw = toOptionString(opts.bind) ?? cfg.gateway?.bind ?? "loopback";
   const bind =
     bindRaw === "loopback" ||
@@ -218,44 +210,17 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
     );
   }
   if (resolvedAuthMode === "token" && !hasToken && !resolvedAuth.allowTailscale) {
-    defaultRuntime.error(
-      [
-        "Gateway auth is set to token, but no token is configured.",
-        "Set gateway.auth.token (or OPENCLAW_GATEWAY_TOKEN), or pass --token.",
-        ...authHints,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
-    defaultRuntime.exit(1);
-    return;
+    // 这里依然保留日志，但不再阻止启动
+    gatewayLog.warn("Gateway auth is set to token, but no token is configured.");
   }
   if (resolvedAuthMode === "password" && !hasPassword) {
-    defaultRuntime.error(
-      [
-        "Gateway auth is set to password, but no password is configured.",
-        "Set gateway.auth.password (or OPENCLAW_GATEWAY_PASSWORD), or pass --password.",
-        ...authHints,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
-    defaultRuntime.exit(1);
-    return;
+    gatewayLog.warn("Gateway auth is set to password, but no password is configured.");
   }
-  if (bind !== "loopback" && !hasSharedSecret) {
-    defaultRuntime.error(
-      [
-        `Refusing to bind gateway to ${bind} without auth.`,
-        "Set gateway.auth.token/password (or OPENCLAW_GATEWAY_TOKEN/OPENCLAW_GATEWAY_PASSWORD) or pass --token/--password.",
-        ...authHints,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
-    defaultRuntime.exit(1);
-    return;
-  }
+
+  // =========================================================================
+  // 【Hugging Face 补丁 2/2 / HF Patch 2/2】
+  // 删除了对非 loopback 绑定时强制要求 Auth 的逻辑。
+  // =========================================================================
 
   try {
     await runGatewayLoop({
