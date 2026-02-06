@@ -59,22 +59,18 @@ export function attachGatewayWsConnectionHandler(params: {
   } = params;
 
   // =========================================================================
-  // 【Hugging Face 强制放行补丁：暴力修改 Auth 对象】
-  // 我们不再只是“建议”程序不验证，而是直接强行改写参数内部的值
+  // 【Hugging Face 终极决胜补丁：强行锁定密码为 123456】
+  // 我们直接修改原始对象，确保无论程序在哪里检查，密码都是 123456
   // =========================================================================
   try {
     // @ts-ignore
-    params.resolvedAuth.mode = 'none'; // 暴力设为无验证
+    params.resolvedAuth.mode = 'token'; // 强制开启 token 模式
     // @ts-ignore
-    params.resolvedAuth.token = undefined;
-    // @ts-ignore
-    params.resolvedAuth.password = undefined;
+    params.resolvedAuth.token = '123456'; // 强行把密码锁死在 123456
     // @ts-ignore
     if (!params.resolvedAuth.controlUi) params.resolvedAuth.controlUi = {};
     // @ts-ignore
     params.resolvedAuth.controlUi.allowedOrigins = ["*"]; // 信任所有域名
-    // @ts-ignore
-    params.resolvedAuth.controlUi.bypassAuthForLocal = true; // 开启本地豁免
   } catch (e) { /* ignore */ }
   // =========================================================================
 
@@ -84,7 +80,7 @@ export function attachGatewayWsConnectionHandler(params: {
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // 继续保持已经成功的伪装逻辑
+    // --- 核心伪装 logic（已经验证成功的伪装，必须保留） ---
     // @ts-ignore
     upgradeReq.headers.origin = "http://localhost"; 
     // @ts-ignore
@@ -96,7 +92,8 @@ export function attachGatewayWsConnectionHandler(params: {
 
     const remoteAddr = "127.0.0.1"; 
     const requestHost = "localhost"; 
-    const requestOrigin = "http://localhost";
+    const requestOrigin = "http://localhost"; 
+    // --------------------------------------------------
 
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
@@ -271,7 +268,7 @@ export function attachGatewayWsConnectionHandler(params: {
       requestUserAgent,
       canvasHostUrl,
       connectNonce,
-      // 将我们暴力修改过的 Auth 对象传进去
+      // 使用被我们强行锁死密码的 resolvedAuth
       resolvedAuth: params.resolvedAuth, 
       gatewayMethods,
       events,
