@@ -59,25 +59,19 @@ export function attachGatewayWsConnectionHandler(params: {
   } = params;
 
   // =========================================================================
-  // 【Hugging Face 终极补丁：强制白名单 & 关闭鉴权】
+  // 【Hugging Face 强制放行补丁】
   // =========================================================================
   try {
-    // 1. 强制关闭验证模式
+    // 1. 彻底关闭鉴权，任何人不需要 token 即可连接
     // @ts-ignore
     resolvedAuth.mode = 'none'; 
     
-    // 2. 强行注入白名单（包含你的 HF 域名）
+    // 2. 强行设置允许的来源为 localhost，配合下方的伪装
     // @ts-ignore
     if (!resolvedAuth.controlUi) resolvedAuth.controlUi = {};
     // @ts-ignore
-    resolvedAuth.controlUi.allowedOrigins = [
-      "https://cntangth2026-longxia999.hf.space",
-      "https://cntangth2026-longxia999.hf.space/",
-      "null",
-      "undefined"
-    ];
+    resolvedAuth.controlUi.allowedOrigins = ["http://localhost", "https://localhost", "null", "undefined"];
   } catch (e) { /* ignore */ }
-  // =========================================================================
 
   wss.on("connection", (socket, upgradeReq) => {
     let client: GatewayWsClient | null = null;
@@ -85,17 +79,29 @@ export function attachGatewayWsConnectionHandler(params: {
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // 核心伪装：让程序认为这是来自 localhost 的本地请求
+    // =========================================================================
+    // 【核心伪装：三重洗脑逻辑】
+    // =========================================================================
+    // 1. 强行改写 Origin 头部为 localhost，欺骗浏览器安全检查逻辑
     // @ts-ignore
-    upgradeReq.headers.host = 'localhost'; 
+    upgradeReq.headers.origin = "http://localhost"; 
+    // 2. 强行改写 Host 为 localhost
+    // @ts-ignore
+    upgradeReq.headers.host = "localhost"; 
+    // 3. 强行删除代理 IP 头
+    // @ts-ignore
+    delete upgradeReq.headers['x-forwarded-for'];
+    // @ts-ignore
+    delete upgradeReq.headers['x-real-ip'];
+
+    // 定义内部变量，全部写死为本地模式
     const remoteAddr = "127.0.0.1"; 
+    const requestHost = "localhost"; 
+    const requestOrigin = "http://localhost"; // 强行同步
+    // =========================================================================
 
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
-    
-    const requestHost = "localhost"; 
-    // 关键修改：直接把 Origin 设置为白名单里的地址
-    const requestOrigin = "https://cntangth2026-longxia999.hf.space";
     const requestUserAgent = headerValue(upgradeReq.headers["user-agent"]);
     
     const forwardedFor = undefined; 
