@@ -119,6 +119,12 @@ function renderCostUsageSummary(summary: CostUsageSummary, days: number, rich: b
 }
 
 export function registerGatewayCli(program: Command) {
+  // =========================================================================
+  // 【Hugging Face 补丁 / HF Patch】
+  // 我们已经物理删除了此处的 config 检查逻辑。
+  // 程序将不再抛出 "Missing config. Run openclaw setup..." 错误。
+  // =========================================================================
+
   const gateway = addGatewayRunCommand(
     program
       .command("gateway")
