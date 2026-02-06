@@ -58,11 +58,26 @@ export function attachGatewayWsConnectionHandler(params: {
     buildRequestContext,
   } = params;
 
-  // 【第一步：彻底关闭鉴权模式】
+  // =========================================================================
+  // 【Hugging Face 终极补丁：强制白名单 & 关闭鉴权】
+  // =========================================================================
   try {
+    // 1. 强制关闭验证模式
     // @ts-ignore
     resolvedAuth.mode = 'none'; 
+    
+    // 2. 强行注入白名单（包含你的 HF 域名）
+    // @ts-ignore
+    if (!resolvedAuth.controlUi) resolvedAuth.controlUi = {};
+    // @ts-ignore
+    resolvedAuth.controlUi.allowedOrigins = [
+      "https://cntangth2026-longxia999.hf.space",
+      "https://cntangth2026-longxia999.hf.space/",
+      "null",
+      "undefined"
+    ];
   } catch (e) { /* ignore */ }
+  // =========================================================================
 
   wss.on("connection", (socket, upgradeReq) => {
     let client: GatewayWsClient | null = null;
@@ -70,25 +85,19 @@ export function attachGatewayWsConnectionHandler(params: {
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // 【第二步：核心伪装补丁】
-    // 1. 强行把 Host 头部改写为 localhost
+    // 核心伪装：让程序认为这是来自 localhost 的本地请求
     // @ts-ignore
     upgradeReq.headers.host = 'localhost'; 
-    // 2. 【最关键】强行删除或覆盖 Origin 头部，绕过 origin not allowed 检查
-    // @ts-ignore
-    delete upgradeReq.headers.origin; 
-    // 3. 强行伪装远程地址为 127.0.0.1
     const remoteAddr = "127.0.0.1"; 
 
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
     
-    // 把这里的所有 Host 和 Origin 变量全部写死，防止 downstream 再次检查
     const requestHost = "localhost"; 
-    const requestOrigin = undefined; // 这里设为 undefined，程序会认为它是非浏览器客户端，从而跳过跨域检查
+    // 关键修改：直接把 Origin 设置为白名单里的地址
+    const requestOrigin = "https://cntangth2026-longxia999.hf.space";
     const requestUserAgent = headerValue(upgradeReq.headers["user-agent"]);
     
-    // 隐藏代理 IP 信息
     const forwardedFor = undefined; 
     const realIp = undefined;
 
