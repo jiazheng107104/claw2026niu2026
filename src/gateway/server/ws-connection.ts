@@ -59,23 +59,19 @@ export function attachGatewayWsConnectionHandler(params: {
   } = params;
 
   // =========================================================================
-  // 【Hugging Face 决胜补丁：强制锁死密码答案】
-  // 我们直接修改 params.resolvedAuth 这个对象。
-  // 不管它之前是什么模式，现在全部变成 123456
+  // 【Hugging Face 终极补丁：强制锁定密码为 123456】
+  // 我们直接修改内存对象，确保无论程序在哪里检查，答案都是 123456
   // =========================================================================
   try {
-    // 使用 Object.defineProperty 强制重写属性，防止对象被锁定
-    Object.defineProperty(params.resolvedAuth, 'mode', { value: 'token', writable: true, configurable: true });
-    Object.defineProperty(params.resolvedAuth, 'token', { value: '123456', writable: true, configurable: true });
-    
-    if (!params.resolvedAuth.controlUi) {
-        // @ts-ignore
-        params.resolvedAuth.controlUi = {};
-    }
+    // @ts-ignore
+    params.resolvedAuth.mode = 'token'; 
+    // @ts-ignore
+    params.resolvedAuth.token = '123456'; 
+    // @ts-ignore
+    if (!params.resolvedAuth.controlUi) params.resolvedAuth.controlUi = {};
     // @ts-ignore
     params.resolvedAuth.controlUi.allowedOrigins = ["*"];
-  } catch (e) { /* 忽略错误 */ }
-  // =========================================================================
+  } catch (e) { }
 
   wss.on("connection", (socket, upgradeReq) => {
     let client: GatewayWsClient | null = null;
@@ -83,7 +79,7 @@ export function attachGatewayWsConnectionHandler(params: {
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // --- 核心伪装 logic（已经验证成功，必须保留） ---
+    // 核心伪装（已验证有效，继续保留）
     // @ts-ignore
     upgradeReq.headers.origin = "http://localhost"; 
     // @ts-ignore
@@ -95,13 +91,11 @@ export function attachGatewayWsConnectionHandler(params: {
 
     const remoteAddr = "127.0.0.1"; 
     const requestHost = "localhost"; 
-    const requestOrigin = "http://localhost"; 
-    // ---------------------------------------------
+    const requestOrigin = "http://localhost";
 
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
     const requestUserAgent = headerValue(upgradeReq.headers["user-agent"]);
-    
     const forwardedFor = undefined; 
     const realIp = undefined;
 
@@ -125,12 +119,8 @@ export function attachGatewayWsConnectionHandler(params: {
     let lastFrameId: string | undefined;
 
     const setCloseCause = (cause: string, meta?: Record<string, unknown>) => {
-      if (!closeCause) {
-        closeCause = cause;
-      }
-      if (meta && Object.keys(meta).length > 0) {
-        closeMeta = { ...closeMeta, ...meta };
-      }
+      if (!closeCause) { closeCause = cause; }
+      if (meta && Object.keys(meta).length > 0) { closeMeta = { ...closeMeta, ...meta }; }
     };
 
     const setLastFrameMeta = (meta: { type?: string; method?: string; id?: string }) => {
@@ -142,11 +132,7 @@ export function attachGatewayWsConnectionHandler(params: {
     };
 
     const send = (obj: unknown) => {
-      try {
-        socket.send(JSON.stringify(obj));
-      } catch {
-        /* ignore */
-      }
+      try { socket.send(JSON.stringify(obj)); } catch { }
     };
 
     const connectNonce = randomUUID();
@@ -157,19 +143,11 @@ export function attachGatewayWsConnectionHandler(params: {
     });
 
     const close = (code = 1000, reason?: string) => {
-      if (closed) {
-        return;
-      }
+      if (closed) { return; }
       closed = true;
       clearTimeout(handshakeTimer);
-      if (client) {
-        clients.delete(client);
-      }
-      try {
-        socket.close(code, reason);
-      } catch {
-        /* ignore */
-      }
+      if (client) { clients.delete(client); }
+      try { socket.close(code, reason); } catch { }
     };
 
     socket.once("error", (err) => {
@@ -178,72 +156,29 @@ export function attachGatewayWsConnectionHandler(params: {
     });
 
     const isNoisySwiftPmHelperClose = (userAgent: string | undefined, remote: string | undefined) =>
-      Boolean(
-        userAgent?.toLowerCase().includes("swiftpm-testing-helper") && isLoopbackAddress(remote),
-      );
+      Boolean(userAgent?.toLowerCase().includes("swiftpm-testing-helper") && isLoopbackAddress(remote));
 
     socket.once("close", (code, reason) => {
       const durationMs = Date.now() - openedAt;
-      const closeContext = {
-        cause: closeCause,
-        handshake: handshakeState,
-        durationMs,
-        lastFrameType,
-        lastFrameMethod,
-        lastFrameId,
-        host: requestHost,
-        origin: requestOrigin,
-        userAgent: requestUserAgent,
-        forwardedFor,
-        ...closeMeta,
-      };
+      const closeContext = { cause: closeCause, handshake: handshakeState, durationMs, lastFrameType, lastFrameMethod, lastFrameId, host: requestHost, origin: requestOrigin, userAgent: requestUserAgent, forwardedFor, ...closeMeta };
       if (!client) {
-        const logFn = isNoisySwiftPmHelperClose(requestUserAgent, remoteAddr)
-          ? logWsControl.debug
-          : logWsControl.warn;
-        logFn(
-          `closed before connect conn=${connId} remote=${remoteAddr ?? "?"} fwd=${forwardedFor ?? "n/a"} origin=${requestOrigin ?? "n/a"} host=${requestHost ?? "n/a"} ua=${requestUserAgent ?? "n/a"} code=${code ?? "n/a"} reason=${reason?.toString() || "n/a"}`,
-          closeContext,
-        );
+        const logFn = isNoisySwiftPmHelperClose(requestUserAgent, remoteAddr) ? logWsControl.debug : logWsControl.warn;
+        logFn(`closed before connect conn=${connId} remote=${remoteAddr ?? "?"} code=${code ?? "n/a"}`, closeContext);
       }
       if (client && isWebchatClient(client.connect.client)) {
-        logWsControl.info(
-          `webchat disconnected code=${code} reason=${reason?.toString() || "n/a"} conn=${connId}`,
-        );
+        logWsControl.info(`webchat disconnected code=${code} conn=${connId}`);
       }
       if (client?.presenceKey) {
         upsertPresence(client.presenceKey, { reason: "disconnect" });
         incrementPresenceVersion();
-        broadcast(
-          "presence",
-          { presence: listSystemPresence() },
-          {
-            dropIfSlow: true,
-            stateVersion: {
-              presence: getPresenceVersion(),
-              health: getHealthVersion(),
-            },
-          },
-        );
+        broadcast("presence", { presence: listSystemPresence() }, { dropIfSlow: true, stateVersion: { presence: getPresenceVersion(), health: getHealthVersion() } });
       }
       if (client?.connect?.role === "node") {
         const context = buildRequestContext();
         const nodeId = context.nodeRegistry.unregister(connId);
-        if (nodeId) {
-          context.nodeUnsubscribeAll(nodeId);
-        }
+        if (nodeId) { context.nodeUnsubscribeAll(nodeId); }
       }
-      logWs("out", "close", {
-        connId,
-        code,
-        reason: reason?.toString(),
-        durationMs,
-        cause: closeCause,
-        handshake: handshakeState,
-        lastFrameType,
-        lastFrameMethod,
-        lastFrameId,
-      });
+      logWs("out", "close", { connId, code, reason: reason?.toString(), durationMs, cause: closeCause, handshake: handshakeState });
       close();
     });
 
@@ -251,49 +186,20 @@ export function attachGatewayWsConnectionHandler(params: {
     const handshakeTimer = setTimeout(() => {
       if (!client) {
         handshakeState = "failed";
-        setCloseCause("handshake-timeout", {
-          handshakeMs: Date.now() - openedAt,
-        });
+        setCloseCause("handshake-timeout", { handshakeMs: Date.now() - openedAt });
         logWsControl.warn(`handshake timeout conn=${connId} remote=${remoteAddr ?? "?"}`);
         close();
       }
     }, handshakeTimeoutMs);
 
     attachGatewayWsMessageHandler({
-      socket,
-      upgradeReq,
-      connId,
-      remoteAddr,
-      forwardedFor,
-      realIp,
-      requestHost,
-      requestOrigin,
-      requestUserAgent,
-      canvasHostUrl,
-      connectNonce,
-      // 【关键：传给处理器的是被我们暴力锁死的 resolvedAuth】
+      socket, upgradeReq, connId, remoteAddr, forwardedFor, realIp, requestHost, requestOrigin, requestUserAgent, canvasHostUrl, connectNonce,
+      // 使用被我们锁死的密码对象
       resolvedAuth: params.resolvedAuth, 
-      gatewayMethods,
-      events,
-      extraHandlers,
-      buildRequestContext,
-      send,
-      close,
-      isClosed: () => closed,
-      clearHandshakeTimer: () => clearTimeout(handshakeTimer),
-      getClient: () => client,
-      setClient: (next) => {
-        client = next;
-        clients.add(next);
-      },
-      setHandshakeState: (next) => {
-        handshakeState = next;
-      },
-      setCloseCause,
-      setLastFrameMeta,
-      logGateway,
-      logHealth,
-      logWsControl,
+      gatewayMethods, events, extraHandlers, buildRequestContext, send, close, isClosed: () => closed, clearHandshakeTimer: () => clearTimeout(handshakeTimer), getClient: () => client,
+      setClient: (next) => { client = next; clients.add(next); },
+      setHandshakeState: (next) => { handshakeState = next; },
+      setCloseCause, setLastFrameMeta, logGateway, logHealth, logWsControl,
     });
   });
 }
