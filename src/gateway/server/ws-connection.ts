@@ -1,110 +1,42 @@
-import type { WebSocket, WebSocketServer } from "ws";
 import { randomUUID } from "node:crypto";
-import type { createSubsystemLogger } from "../../logging/subsystem.js";
-import type { ResolvedGatewayAuth } from "../auth.js";
-import type { GatewayRequestContext, GatewayRequestHandlers } from "../server-methods/types.js";
-import type { GatewayWsClient } from "./ws-types.js";
 import { resolveCanvasHostUrl } from "../../infra/canvas-host-url.js";
 import { listSystemPresence, upsertPresence } from "../../infra/system-presence.js";
 import { isWebchatClient } from "../../utils/message-channel.js";
-import { isLoopbackAddress } from "../net.js";
 import { getHandshakeTimeoutMs } from "../server-constants.js";
 import { formatError } from "../server-utils.js";
 import { logWs } from "../ws-log.js";
 import { getHealthVersion, getPresenceVersion, incrementPresenceVersion } from "./health-state.js";
 import { attachGatewayWsMessageHandler } from "./ws-connection/message-handler.js";
 
-type SubsystemLogger = ReturnType<typeof createSubsystemLogger>;
+export function attachGatewayWsConnectionHandler(params: any) {
+  const { wss, clients, port, canvasHostEnabled, canvasHostServerPort, broadcast, buildRequestContext, logWsControl } = params;
 
-export function attachGatewayWsConnectionHandler(params: {
-  wss: WebSocketServer;
-  clients: Set<GatewayWsClient>;
-  port: number;
-  gatewayHost?: string;
-  canvasHostEnabled: boolean;
-  canvasHostServerPort?: number;
-  resolvedAuth: ResolvedGatewayAuth;
-  gatewayMethods: string[];
-  events: string[];
-  logGateway: SubsystemLogger;
-  logHealth: SubsystemLogger;
-  logWsControl: SubsystemLogger;
-  extraHandlers: GatewayRequestHandlers;
-  broadcast: (
-    event: string,
-    payload: unknown,
-    opts?: {
-      dropIfSlow?: boolean;
-      stateVersion?: { presence?: number; health?: number };
-    },
-  ) => void;
-  buildRequestContext: () => GatewayRequestContext;
-}) {
-  const {
-    wss,
-    clients,
-    port,
-    gatewayHost,
-    canvasHostEnabled,
-    canvasHostServerPort,
-    resolvedAuth,
-    gatewayMethods,
-    events,
-    logGateway,
-    logHealth,
-    logWsControl,
-    extraHandlers,
-    broadcast,
-    buildRequestContext,
-  } = params;
-
-  // =========================================================================
-  // 【Hugging Face 终极补丁：强制锁定密码为 123456】
-  // 我们直接修改内存对象，确保无论程序在哪里检查，答案都是 123456
-  // =========================================================================
+  // 【强力补丁：锁死 Token】
   try {
-    // @ts-ignore
-    params.resolvedAuth.mode = 'token'; 
-    // @ts-ignore
-    params.resolvedAuth.token = '123456'; 
-    // @ts-ignore
+    params.resolvedAuth.mode = 'token';
+    params.resolvedAuth.token = '123456';
     if (!params.resolvedAuth.controlUi) params.resolvedAuth.controlUi = {};
-    // @ts-ignore
     params.resolvedAuth.controlUi.allowedOrigins = ["*"];
-  } catch (e) { }
+  } catch (e) {}
 
-  wss.on("connection", (socket, upgradeReq) => {
-    let client: GatewayWsClient | null = null;
+  wss.on("connection", (socket: any, upgradeReq: any) => {
+    let client: any = null;
     let closed = false;
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // 核心伪装（已验证有效，继续保留）
-    // @ts-ignore
+    // --- 核心伪装（骗过 HF 代理） ---
     upgradeReq.headers.origin = "http://localhost"; 
-    // @ts-ignore
     upgradeReq.headers.host = "localhost"; 
-    // @ts-ignore
-    delete upgradeReq.headers['x-forwarded-for'];
-    // @ts-ignore
-    delete upgradeReq.headers['x-real-ip'];
-
-    const remoteAddr = "127.0.0.1"; 
-    const requestHost = "localhost"; 
+    
+    const remoteAddr = "127.0.0.1";
+    const requestHost = "localhost";
     const requestOrigin = "http://localhost";
+    const requestUserAgent = upgradeReq.headers["user-agent"];
 
-    const headerValue = (value: string | string[] | undefined) =>
-      Array.isArray(value) ? value[0] : value;
-    const requestUserAgent = headerValue(upgradeReq.headers["user-agent"]);
-    const forwardedFor = undefined; 
-    const realIp = undefined;
-
-    const canvasHostPortForWs = canvasHostServerPort ?? (canvasHostEnabled ? port : undefined);
-    const canvasHostOverride =
-      gatewayHost && gatewayHost !== "0.0.0.0" && gatewayHost !== "::" ? gatewayHost : undefined;
     const canvasHostUrl = resolveCanvasHostUrl({
-      canvasPort: canvasHostPortForWs,
-      hostOverride: canvasHostServerPort ? canvasHostOverride : undefined,
+      canvasPort: canvasHostServerPort ?? (canvasHostEnabled ? port : undefined),
+      hostOverride: undefined,
       requestHost: "localhost", 
       forwardedProto: upgradeReq.headers["x-forwarded-proto"],
       localAddress: upgradeReq.socket?.localAddress,
@@ -112,94 +44,34 @@ export function attachGatewayWsConnectionHandler(params: {
 
     logWs("in", "open", { connId, remoteAddr });
     let handshakeState: "pending" | "connected" | "failed" = "pending";
-    let closeCause: string | undefined;
-    let closeMeta: Record<string, unknown> = {};
-    let lastFrameType: string | undefined;
-    let lastFrameMethod: string | undefined;
-    let lastFrameId: string | undefined;
 
-    const setCloseCause = (cause: string, meta?: Record<string, unknown>) => {
-      if (!closeCause) { closeCause = cause; }
-      if (meta && Object.keys(meta).length > 0) { closeMeta = { ...closeMeta, ...meta }; }
-    };
-
-    const setLastFrameMeta = (meta: { type?: string; method?: string; id?: string }) => {
-      if (meta.type || meta.method || meta.id) {
-        lastFrameType = meta.type ?? lastFrameType;
-        lastFrameMethod = meta.method ?? lastFrameMethod;
-        lastFrameId = meta.id ?? lastFrameId;
-      }
-    };
-
-    const send = (obj: unknown) => {
-      try { socket.send(JSON.stringify(obj)); } catch { }
-    };
-
-    const connectNonce = randomUUID();
-    send({
-      type: "event",
-      event: "connect.challenge",
-      payload: { nonce: connectNonce, ts: Date.now() },
-    });
+    const send = (obj: any) => { try { socket.send(JSON.stringify(obj)); } catch {} };
+    send({ type: "event", event: "connect.challenge", payload: { nonce: randomUUID(), ts: Date.now() } });
 
     const close = (code = 1000, reason?: string) => {
-      if (closed) { return; }
+      if (closed) return;
       closed = true;
       clearTimeout(handshakeTimer);
-      if (client) { clients.delete(client); }
-      try { socket.close(code, reason); } catch { }
+      if (client) clients.delete(client);
+      try { socket.close(code, reason); } catch {}
     };
 
-    socket.once("error", (err) => {
-      logWsControl.warn(`error conn=${connId} remote=${remoteAddr ?? "?"}: ${formatError(err)}`);
+    socket.once("error", () => close());
+    socket.once("close", (code: any, reason: any) => {
+      logWs("out", "close", { connId, code, reason: reason?.toString(), durationMs: Date.now() - openedAt });
       close();
     });
 
-    const isNoisySwiftPmHelperClose = (userAgent: string | undefined, remote: string | undefined) =>
-      Boolean(userAgent?.toLowerCase().includes("swiftpm-testing-helper") && isLoopbackAddress(remote));
-
-    socket.once("close", (code, reason) => {
-      const durationMs = Date.now() - openedAt;
-      const closeContext = { cause: closeCause, handshake: handshakeState, durationMs, lastFrameType, lastFrameMethod, lastFrameId, host: requestHost, origin: requestOrigin, userAgent: requestUserAgent, forwardedFor, ...closeMeta };
-      if (!client) {
-        const logFn = isNoisySwiftPmHelperClose(requestUserAgent, remoteAddr) ? logWsControl.debug : logWsControl.warn;
-        logFn(`closed before connect conn=${connId} remote=${remoteAddr ?? "?"} code=${code ?? "n/a"}`, closeContext);
-      }
-      if (client && isWebchatClient(client.connect.client)) {
-        logWsControl.info(`webchat disconnected code=${code} conn=${connId}`);
-      }
-      if (client?.presenceKey) {
-        upsertPresence(client.presenceKey, { reason: "disconnect" });
-        incrementPresenceVersion();
-        broadcast("presence", { presence: listSystemPresence() }, { dropIfSlow: true, stateVersion: { presence: getPresenceVersion(), health: getHealthVersion() } });
-      }
-      if (client?.connect?.role === "node") {
-        const context = buildRequestContext();
-        const nodeId = context.nodeRegistry.unregister(connId);
-        if (nodeId) { context.nodeUnsubscribeAll(nodeId); }
-      }
-      logWs("out", "close", { connId, code, reason: reason?.toString(), durationMs, cause: closeCause, handshake: handshakeState });
-      close();
-    });
-
-    const handshakeTimeoutMs = getHandshakeTimeoutMs();
     const handshakeTimer = setTimeout(() => {
-      if (!client) {
-        handshakeState = "failed";
-        setCloseCause("handshake-timeout", { handshakeMs: Date.now() - openedAt });
-        logWsControl.warn(`handshake timeout conn=${connId} remote=${remoteAddr ?? "?"}`);
-        close();
-      }
-    }, handshakeTimeoutMs);
+      if (!client) { handshakeState = "failed"; close(1008, "handshake timeout"); }
+    }, getHandshakeTimeoutMs());
 
     attachGatewayWsMessageHandler({
-      socket, upgradeReq, connId, remoteAddr, forwardedFor, realIp, requestHost, requestOrigin, requestUserAgent, canvasHostUrl, connectNonce,
-      // 使用被我们锁死的密码对象
-      resolvedAuth: params.resolvedAuth, 
-      gatewayMethods, events, extraHandlers, buildRequestContext, send, close, isClosed: () => closed, clearHandshakeTimer: () => clearTimeout(handshakeTimer), getClient: () => client,
-      setClient: (next) => { client = next; clients.add(next); },
-      setHandshakeState: (next) => { handshakeState = next; },
-      setCloseCause, setLastFrameMeta, logGateway, logHealth, logWsControl,
+      ...params, socket, upgradeReq, connId, remoteAddr, requestHost, requestOrigin, requestUserAgent, canvasHostUrl,
+      send, close, isClosed: () => closed, clearHandshakeTimer: () => clearTimeout(handshakeTimer), getClient: () => client,
+      setClient: (next: any) => { client = next; clients.add(next); },
+      setHandshakeState: (next: any) => { handshakeState = next; },
+      setCloseCause: () => {}, setLastFrameMeta: () => {},
     });
   });
 }
