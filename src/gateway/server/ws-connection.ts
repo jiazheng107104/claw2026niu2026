@@ -59,19 +59,17 @@ export function attachGatewayWsConnectionHandler(params: {
   } = params;
 
   // =========================================================================
-  // 【Hugging Face 强制放行补丁】
+  // 【Hugging Face 决胜补丁：创建万能通行证】
+  // 之前的修改可能因为对象锁定而失效，现在我们直接造一个新的对象
   // =========================================================================
-  try {
-    // 1. 彻底关闭鉴权，任何人不需要 token 即可连接
-    // @ts-ignore
-    resolvedAuth.mode = 'none'; 
-    
-    // 2. 强行设置允许的来源为 localhost，配合下方的伪装
-    // @ts-ignore
-    if (!resolvedAuth.controlUi) resolvedAuth.controlUi = {};
-    // @ts-ignore
-    resolvedAuth.controlUi.allowedOrigins = ["http://localhost", "https://localhost", "null", "undefined"];
-  } catch (e) { /* ignore */ }
+  const superAuth: ResolvedGatewayAuth = {
+    ...resolvedAuth,
+    mode: 'none', // 强制设置为无验证模式
+    controlUi: {
+      allowedOrigins: ["http://localhost", "https://localhost", "*"], // 信任所有来源
+    }
+  };
+  // =========================================================================
 
   wss.on("connection", (socket, upgradeReq) => {
     let client: GatewayWsClient | null = null;
@@ -79,26 +77,20 @@ export function attachGatewayWsConnectionHandler(params: {
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // =========================================================================
-    // 【核心伪装：三重洗脑逻辑】
-    // =========================================================================
-    // 1. 强行改写 Origin 头部为 localhost，欺骗浏览器安全检查逻辑
+    // --- 核心伪装 logic (已经验证成功的部分，继续保留) ---
     // @ts-ignore
     upgradeReq.headers.origin = "http://localhost"; 
-    // 2. 强行改写 Host 为 localhost
     // @ts-ignore
     upgradeReq.headers.host = "localhost"; 
-    // 3. 强行删除代理 IP 头
     // @ts-ignore
     delete upgradeReq.headers['x-forwarded-for'];
     // @ts-ignore
     delete upgradeReq.headers['x-real-ip'];
 
-    // 定义内部变量，全部写死为本地模式
     const remoteAddr = "127.0.0.1"; 
     const requestHost = "localhost"; 
-    const requestOrigin = "http://localhost"; // 强行同步
-    // =========================================================================
+    const requestOrigin = "http://localhost"; 
+    // --------------------------------------------------
 
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
@@ -273,7 +265,8 @@ export function attachGatewayWsConnectionHandler(params: {
       requestUserAgent,
       canvasHostUrl,
       connectNonce,
-      resolvedAuth,
+      // 【关键修改点：传入我们的 superAuth】
+      resolvedAuth: superAuth, 
       gatewayMethods,
       events,
       extraHandlers,
