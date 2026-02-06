@@ -59,17 +59,21 @@ export function attachGatewayWsConnectionHandler(params: {
   } = params;
 
   // =========================================================================
-  // 【Hugging Face 决胜补丁：创建万能通行证】
-  // 之前的修改可能因为对象锁定而失效，现在我们直接造一个新的对象
+  // 【Hugging Face 强力注入补丁】
+  // 直接修改原始参数对象的值，确保 message-handler 必须看到 mode: 'none'
   // =========================================================================
-  const superAuth: ResolvedGatewayAuth = {
-    ...resolvedAuth,
-    mode: 'none', // 强制设置为无验证模式
-    controlUi: {
-      allowedOrigins: ["http://localhost", "https://localhost", "*"], // 信任所有来源
-    }
-  };
-  // =========================================================================
+  try {
+    // @ts-ignore
+    params.resolvedAuth.mode = 'none'; 
+    // @ts-ignore
+    params.resolvedAuth.token = undefined;
+    // @ts-ignore
+    params.resolvedAuth.password = undefined;
+    // @ts-ignore
+    if (!params.resolvedAuth.controlUi) params.resolvedAuth.controlUi = {};
+    // @ts-ignore
+    params.resolvedAuth.controlUi.allowedOrigins = ["*"]; // 信任所有来源
+  } catch (e) { /* ignore */ }
 
   wss.on("connection", (socket, upgradeReq) => {
     let client: GatewayWsClient | null = null;
@@ -77,7 +81,7 @@ export function attachGatewayWsConnectionHandler(params: {
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // --- 核心伪装 logic (已经验证成功的部分，继续保留) ---
+    // 继续保持已经成功的 Host/Origin 伪装逻辑
     // @ts-ignore
     upgradeReq.headers.origin = "http://localhost"; 
     // @ts-ignore
@@ -89,8 +93,7 @@ export function attachGatewayWsConnectionHandler(params: {
 
     const remoteAddr = "127.0.0.1"; 
     const requestHost = "localhost"; 
-    const requestOrigin = "http://localhost"; 
-    // --------------------------------------------------
+    const requestOrigin = "http://localhost";
 
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
@@ -265,8 +268,8 @@ export function attachGatewayWsConnectionHandler(params: {
       requestUserAgent,
       canvasHostUrl,
       connectNonce,
-      // 【关键修改点：传入我们的 superAuth】
-      resolvedAuth: superAuth, 
+      // 依然传入 params.resolvedAuth，但它的内部值已经被我们在上面强行改掉了
+      resolvedAuth: params.resolvedAuth, 
       gatewayMethods,
       events,
       extraHandlers,
