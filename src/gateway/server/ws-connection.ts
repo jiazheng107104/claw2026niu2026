@@ -8,10 +8,11 @@ export function attachGatewayWsConnectionHandler(params: any) {
   const { wss, clients, port, canvasHostEnabled, canvasHostServerPort } = params;
 
   wss.on("connection", (socket: any, upgradeReq: any) => {
+    let clientState: any = null; // 修正点：增加内部状态存储
     const connId = randomUUID();
     const openedAt = Date.now();
 
-    // 🔐 核心伪装：欺骗反向代理检查
+    // 🔐 核心伪装
     upgradeReq.headers.origin = "http://localhost"; 
     upgradeReq.headers.host = "localhost"; 
     
@@ -31,7 +32,12 @@ export function attachGatewayWsConnectionHandler(params: any) {
       requestHost: "localhost", requestOrigin: "http://localhost",
       send, close, isClosed: () => socket.readyState !== 1, 
       clearHandshakeTimer: () => clearTimeout(handshakeTimer),
-      setClient: (next: any) => clients.add(next),
+      // ⚡ 修正点：补齐 getClient 函数
+      getClient: () => clientState,
+      setClient: (next: any) => {
+        clientState = next;
+        clients.add(next);
+      },
       setHandshakeState: () => {},
     });
   });
