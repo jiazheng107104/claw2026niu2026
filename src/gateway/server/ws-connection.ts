@@ -59,19 +59,22 @@ export function attachGatewayWsConnectionHandler(params: {
   } = params;
 
   // =========================================================================
-  // 【Hugging Face 终极决胜补丁：强行锁定密码为 123456】
-  // 我们直接修改原始对象，确保无论程序在哪里检查，密码都是 123456
+  // 【Hugging Face 决胜补丁：强制锁死密码答案】
+  // 我们直接修改 params.resolvedAuth 这个对象。
+  // 不管它之前是什么模式，现在全部变成 123456
   // =========================================================================
   try {
+    // 使用 Object.defineProperty 强制重写属性，防止对象被锁定
+    Object.defineProperty(params.resolvedAuth, 'mode', { value: 'token', writable: true, configurable: true });
+    Object.defineProperty(params.resolvedAuth, 'token', { value: '123456', writable: true, configurable: true });
+    
+    if (!params.resolvedAuth.controlUi) {
+        // @ts-ignore
+        params.resolvedAuth.controlUi = {};
+    }
     // @ts-ignore
-    params.resolvedAuth.mode = 'token'; // 强制开启 token 模式
-    // @ts-ignore
-    params.resolvedAuth.token = '123456'; // 强行把密码锁死在 123456
-    // @ts-ignore
-    if (!params.resolvedAuth.controlUi) params.resolvedAuth.controlUi = {};
-    // @ts-ignore
-    params.resolvedAuth.controlUi.allowedOrigins = ["*"]; // 信任所有域名
-  } catch (e) { /* ignore */ }
+    params.resolvedAuth.controlUi.allowedOrigins = ["*"];
+  } catch (e) { /* 忽略错误 */ }
   // =========================================================================
 
   wss.on("connection", (socket, upgradeReq) => {
@@ -80,7 +83,7 @@ export function attachGatewayWsConnectionHandler(params: {
     const openedAt = Date.now();
     const connId = randomUUID();
 
-    // --- 核心伪装 logic（已经验证成功的伪装，必须保留） ---
+    // --- 核心伪装 logic（已经验证成功，必须保留） ---
     // @ts-ignore
     upgradeReq.headers.origin = "http://localhost"; 
     // @ts-ignore
@@ -93,7 +96,7 @@ export function attachGatewayWsConnectionHandler(params: {
     const remoteAddr = "127.0.0.1"; 
     const requestHost = "localhost"; 
     const requestOrigin = "http://localhost"; 
-    // --------------------------------------------------
+    // ---------------------------------------------
 
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
@@ -268,7 +271,7 @@ export function attachGatewayWsConnectionHandler(params: {
       requestUserAgent,
       canvasHostUrl,
       connectNonce,
-      // 使用被我们强行锁死密码的 resolvedAuth
+      // 【关键：传给处理器的是被我们暴力锁死的 resolvedAuth】
       resolvedAuth: params.resolvedAuth, 
       gatewayMethods,
       events,
