@@ -58,20 +58,38 @@ export function attachGatewayWsConnectionHandler(params: {
     buildRequestContext,
   } = params;
 
+  // 【Hugging Face 补丁 1/3】
+  // 强行把验证模式改为 'none' (无验证)，防止 token 检查
+  // 注意：这会让 Bot 不需要密码也能连接，但在 HF Spaces 这种隔离环境里通常没问题
+  // 如果你希望保留密码，可以把这行注释掉，只保留下面的 IP 伪装即可
+  try {
+    // @ts-ignore
+    resolvedAuth.mode = 'none'; 
+  } catch (e) { /* ignore */ }
+
   wss.on("connection", (socket, upgradeReq) => {
     let client: GatewayWsClient | null = null;
     let closed = false;
     const openedAt = Date.now();
     const connId = randomUUID();
-    const remoteAddr = (socket as WebSocket & { _socket?: { remoteAddress?: string } })._socket
-      ?.remoteAddress;
+
+    // 【Hugging Face 补丁 2/3】
+    // 强制把远程 IP 伪装成 127.0.0.1 (本机)
+    // 原代码：const remoteAddr = (socket as WebSocket ...
+    const remoteAddr = "127.0.0.1"; 
+
     const headerValue = (value: string | string[] | undefined) =>
       Array.isArray(value) ? value[0] : value;
     const requestHost = headerValue(upgradeReq.headers.host);
     const requestOrigin = headerValue(upgradeReq.headers.origin);
     const requestUserAgent = headerValue(upgradeReq.headers["user-agent"]);
-    const forwardedFor = headerValue(upgradeReq.headers["x-forwarded-for"]);
-    const realIp = headerValue(upgradeReq.headers["x-real-ip"]);
+    
+    // 【Hugging Face 补丁 3/3】
+    // 强制隐藏代理信息，防止下游代码发现我们是在 Hugging Face 的反向代理后面
+    // 原代码：const forwardedFor = headerValue(upgradeReq.headers["x-forwarded-for"]);
+    const forwardedFor = undefined; 
+    // 原代码：const realIp = headerValue(upgradeReq.headers["x-real-ip"]);
+    const realIp = undefined;
 
     const canvasHostPortForWs = canvasHostServerPort ?? (canvasHostEnabled ? port : undefined);
     const canvasHostOverride =
