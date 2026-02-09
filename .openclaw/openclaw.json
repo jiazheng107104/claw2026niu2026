@@ -1,5 +1,11 @@
+
 {
-  "gateway": { "auth": { "mode": "token", "token": "123456" } },
+  "meta": {
+    "lastTouchedVersion": "2026.2.4"
+  },
+  "gateway": {
+    "auth": { "mode": "token", "token": "123456" }
+  },
   "browser": {
     "enabled": true,
     "defaultProfile": "pw-ai",
@@ -9,8 +15,9 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "token": "7895663759:AAF_iRhzyTXXxUDybDt0QUkX1U34AatAtR4",
-      "dmPolicy": "open"
+      "botToken": "7895663759:AAF_iRhzyTXXxUDybDt0QUkX1U34AatAtR4",
+      "dmPolicy": "open",
+      "groupPolicy": "allowlist"
     }
   },
   "agents": {
