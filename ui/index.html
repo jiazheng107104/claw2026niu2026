@@ -8,6 +8,44 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <script>
+      (function() {
+        // 1. 检查本地存储，实现“只输入一次”逻辑
+        if (localStorage.getItem('isClawUnlocked') === 'true') return;
+
+        // 2. 阻塞式弹窗，确保在页面渲染前拦截用户
+        const pwd = prompt("请输入访问授权密码：");
+
+        if (!pwd) {
+          alert("必须输入密码才能访问大龙虾控制台！");
+          window.location.reload();
+          return;
+        }
+
+        // 3. 远程校验：请确保你 Linux 服务器上的 PHP 文件名是 verify.php
+        // 如果你改了文件名，请修改下方的 verify.php
+        fetch(`https://key.cntangth.online/verify.php?password=${encodeURIComponent(pwd)}`)
+          .then(response => {
+            if (!response.ok) throw new Error("网络响应异常");
+            return response.json();
+          })
+          .then(data => {
+            // 校验 PHP 返回的 JSON 数据：{"status": "ok"}
+            if (data.status === 'ok') {
+              localStorage.setItem('isClawUnlocked', 'true');
+              alert("解锁成功！欢迎回来。");
+            } else {
+              alert("密码错误，拒绝访问！");
+              window.location.reload();
+            }
+          })
+          .catch(err => {
+            alert("鉴权服务器连接失败，请检查 HTTPS 证书或 PHP 脚本：" + err);
+            window.location.reload();
+          });
+      })();
+    </script>
   </head>
   <body>
     <openclaw-app></openclaw-app>
