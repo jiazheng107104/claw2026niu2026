@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/moonshotai/kimi-k2.5" },
+      "model": { "primary": "openai/deepseek-ai/deepseek-v3.2" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "moonshotai/kimi-k2.5", "name": "kimi-k2.5", "contextWindow": 64000 }
+          { "id": "deepseek-ai/deepseek-v3.2", "name": "deepseek-v3.2", "contextWindow": 64000 }
         ]
       }
     }
