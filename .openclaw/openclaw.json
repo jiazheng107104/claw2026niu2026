@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/z-ai/glm5" },
+      "model": { "primary": "openai/moonshotai/kimi-k2-instruct" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "z-ai/glm5", "name": "z-ai/glm5", "contextWindow": 64000 }
+          { "id": "moonshotai/kimi-k2-instruct", "name": "moonshotai/kimi-k2-instruct", "contextWindow": 64000 }
         ]
       }
     }
