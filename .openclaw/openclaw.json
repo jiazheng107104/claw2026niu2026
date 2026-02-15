@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/glm-4.7-flash" },
+      "model": { "primary": "openai/qwen/qwen3-coder-480b-a35b-instruct" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -34,10 +34,10 @@
         "api": "openai-chat",
         "apiKey": "68a76c4d3730449bb6502db2c386cdf5.IjepmRquHyhGJJYM",
         "auth": "api-key",
-        "baseUrl": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+        "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "glm-4.7-flash", "name": "glm-4.7-flash", "contextWindow": 64000 }
+          { "id": "qwen/qwen3-coder-480b-a35b-instruct", "name": "qwen/qwen3-coder-480b-a35b-instruct", "contextWindow": 64000 }
         ]
       }
     }
