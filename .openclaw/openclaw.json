@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/z-ai/glm4.7" },
+      "model": { "primary": "openai/glm-4.7-flash" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "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",
+        "apiKey": "68a76c4d3730449bb6502db2c386cdf5.IjepmRquHyhGJJYM",
         "auth": "api-key",
-        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "baseUrl": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
         "authHeader": true,
         "models": [
-          { "id": "z-ai/glm4.7", "name": "glm4.7", "contextWindow": 64000 }
+          { "id": "glm-4.7-flash", "name": "glm-4.7-flash", "contextWindow": 64000 }
         ]
       }
     }
