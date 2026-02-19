@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/xopglm47blth2" },
+      "model": { "primary": "openai/KAT-Coder-Exp-72B-1010" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "ca8f7f4e05321c2f872f54ff12c967b5:OWUzM2FjZDRmNTRjOGFmYjFhZGFmM2Qz",
+        "apiKey": "sk-CFHZc86dRxrx3EqAAe70541d2a3641Fd9379EaA6420d2233",
         "auth": "api-key",
-        "baseUrl": "https://maas-api.cn-huabei-1.xf-yun.com/v2/chat/completions",
+        "baseUrl": "https://api.edgefn.net/v1",
         "authHeader": true,
         "models": [
-          { "id": "xopglm47blth2", "name": "xopglm47blth2", "contextWindow": 64000 }
+          { "id": "KAT-Coder-Exp-72B-1010", "name": "KAT-Coder-Exp-72B-1010", "contextWindow": 64000 }
         ]
       }
     }
