@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/z-ai/glm4.7" },
+      "model": { "primary": "openai/moonshotai/kimi-k2.5" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "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",
+        "apiKey": "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",
         "auth": "api-key",
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "z-ai/glm4.7", "name": "z-ai/glm4.7", "contextWindow": 64000 }
+          { "id": "moonshotai/kimi-k2.5", "name": "moonshotai/kimi-k2.5", "contextWindow": 64000 }
         ]
       }
     }
