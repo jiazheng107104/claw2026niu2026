@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/z-ai/glm4.7" },
+      "model": { "primary": "openai/deepseek-ai/deepseek-v3.1-terminus" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "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",
+        "apiKey": "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",
         "auth": "api-key",
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "z-ai/glm4.7", "name": "z-ai/glm4.7", "contextWindow": 64000 }
+          { "id": "deepseek-ai/deepseek-v3.1-terminus", "name": "deepseek-ai/deepseek-v3.1-terminus", "contextWindow": 64000 }
         ]
       }
     }
