@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/xminimaxm25" },
+      "model": { "primary": "openai/minimaxai/minimax-m2.1" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "ca8f7f4e05321c2f872f54ff12c967b5:OWUzM2FjZDRmNTRjOGFmYjFhZGFmM2Qz",
+        "apiKey": "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",
         "auth": "api-key",
-        "baseUrl": "https://maas-api.cn-huabei-1.xf-yun.com/v2/chat/completions",
+        "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "xminimaxm25", "name": "xminimaxm25", "contextWindow": 64000 }
+          { "id": "minimaxai/minimax-m2.1", "name": "minimaxai/minimax-m2.1", "contextWindow": 64000 }
         ]
       }
     }
