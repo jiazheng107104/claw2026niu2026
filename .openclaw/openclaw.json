@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/minimaxai/minimax-m2.1" },
+      "model": { "primary": "openai/openai/gpt-oss-120b" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "minimaxai/minimax-m2.1", "name": "minimaxai/minimax-m2.1", "contextWindow": 64000 }
+          { "id": "openai/gpt-oss-120b", "name": "openai/gpt-oss-120b", "contextWindow": 64000 }
         ]
       }
     }
