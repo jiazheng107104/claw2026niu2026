@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/openai/gpt-oss-120b" },
+      "model": { "primary": "openai/qwen3-max" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "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",
+        "apiKey": "sk-eb83531445e13d1bccdc849b43e3cb4a",
         "auth": "api-key",
-        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "baseUrl": "https://apis.iflow.cn/v1",
         "authHeader": true,
         "models": [
-          { "id": "openai/gpt-oss-120b", "name": "openai/gpt-oss-120b", "contextWindow": 64000 }
+          { "id": "qwen3-max", "name": "qwen3-max", "contextWindow": 64000 }
         ]
       }
     }
