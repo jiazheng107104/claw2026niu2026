@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/openai/z-ai/glm4.7" },
+      "model": { "primary": "openai/mistralai/devstral-2-123b-instruct-2512" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "openai/z-ai/glm4.7", "name": "openai/z-ai/glm4.7", "contextWindow": 64000 }
+          { "id": "mistralai/devstral-2-123b-instruct-2512", "name": "mistralai/devstral-2-123b-instruct-2512", "contextWindow": 64000 }
         ]
       }
     }
