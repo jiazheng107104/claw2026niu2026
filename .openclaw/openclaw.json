@@ -14,7 +14,7 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "botToken": "8253761770:AAH2vO07ygvCy7F3lZ25hu7WykBWvomOf4g",
+      "botToken": "8729694631:AAE8VNapw7mxWFzctImaa-5JvhgUlWMtnnU",
       "dmPolicy": "open"
     }
   },
