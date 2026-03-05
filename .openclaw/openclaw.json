@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/google/gemma-3-27b-it" },
+      "model": { "primary": "openai/openai/z-ai/glm4.7" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "google/gemma-3-27b-it", "name": "google/gemma-3-27b-it", "contextWindow": 64000 }
+          { "id": "openai/z-ai/glm4.7", "name": "openai/z-ai/glm4.7", "contextWindow": 64000 }
         ]
       }
     }
