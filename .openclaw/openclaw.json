@@ -32,7 +32,7 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "sk-eb83531445e13d1bccdc849b43e3cb4a",
+        "apiKey": "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",
         "auth": "api-key",
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
