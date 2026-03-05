@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/qwen/qwen2.5-coder-32b-instruct" },
+      "model": { "primary": "openai/google/gemma-3-27b-it" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "qwen/qwen2.5-coder-32b-instruct", "name": "qwen/qwen2.5-coder-32b-instruct", "contextWindow": 64000 }
+          { "id": "google/gemma-3-27b-it", "name": "google/gemma-3-27b-it", "contextWindow": 64000 }
         ]
       }
     }
