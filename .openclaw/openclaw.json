@@ -14,13 +14,13 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "botToken": "7895663759:AAF_iRhzyTXXxUDybDt0QUkX1U34AatAtR4",
+      "botToken": "8253761770:AAH2vO07ygvCy7F3lZ25hu7WykBWvomOf4g",
       "dmPolicy": "open"
     }
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/qwen3-max" },
+      "model": { "primary": "openai/meta/llama-3.3-70b-instruct" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -34,10 +34,10 @@
         "api": "openai-chat",
         "apiKey": "sk-eb83531445e13d1bccdc849b43e3cb4a",
         "auth": "api-key",
-        "baseUrl": "https://apis.iflow.cn/v1",
+        "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "qwen3-max", "name": "qwen3-max", "contextWindow": 64000 }
+          { "id": "meta/llama-3.3-70b-instruct", "name": "meta/llama-3.3-70b-instruct", "contextWindow": 64000 }
         ]
       }
     }
