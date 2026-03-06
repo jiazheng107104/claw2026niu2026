@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/bytedance/seed-oss-36b-instruct" },
+      "model": { "primary": "openai/qwen/qwen2.5-coder-32b-instruct" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "bytedance/seed-oss-36b-instruct", "name": "bytedance/seed-oss-36b-instruct", "contextWindow": 64000 }
+          { "id": "qwen/qwen2.5-coder-32b-instruct", "name": "qwen/qwen2.5-coder-32b-instruct", "contextWindow": 64000 }
         ]
       }
     }
