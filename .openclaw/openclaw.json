@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/gpt-oss-120b" },
+      "model": { "primary": "openai/nvidia/llama-3.3-nemotron-super-49b-v1.5" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "openai/gpt-oss-120b", "name": "openai/gpt-oss-120b", "contextWindow": 64000 }
+          { "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5", "name": "nvidia/llama-3.3-nemotron-super-49b-v1.5", "contextWindow": 64000 }
         ]
       }
     }
