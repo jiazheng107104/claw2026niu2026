@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/nvidia/llama-3.1-nemotron-ultra-253b-v1" },
+      "model": { "primary": "openai/bytedance/seed-oss-36b-instruct" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://integrate.api.nvidia.com/v1",
         "authHeader": true,
         "models": [
-          { "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1", "name": "nvidia/llama-3.1-nemotron-ultra-253b-v1", "contextWindow": 64000 }
+          { "id": "bytedance/seed-oss-36b-instruct", "name": "bytedance/seed-oss-36b-instruct", "contextWindow": 64000 }
         ]
       }
     }
