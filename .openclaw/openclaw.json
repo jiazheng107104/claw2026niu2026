@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/minimaxai/minimax-m2.1" },
+      "model": { "primary": "openai/KAT-Coder-Exp-72B-1010" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "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",
+        "apiKey": "sk-CFHZc86dRxrx3EqAAe70541d2a3641Fd9379EaA6420d2233",
         "auth": "api-key",
-        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "baseUrl": "https://api.edgefn.net/v1",
         "authHeader": true,
         "models": [
-          { "id": "minimaxai/minimax-m2.1", "name": "minimaxai/minimax-m2.1", "contextWindow": 64000 }
+          { "id": "KAT-Coder-Exp-72B-1010", "name": "KAT-Coder-Exp-72B-1010", "contextWindow": 64000 }
         ]
       }
     }
