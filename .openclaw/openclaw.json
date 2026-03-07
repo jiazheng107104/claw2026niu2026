@@ -20,7 +20,7 @@
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/xopglm47blth2" },
+      "model": { "primary": "openai/xopqwen35397b" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -37,7 +37,7 @@
         "baseUrl": "https://maas-api.cn-huabei-1.xf-yun.com/v2",
         "authHeader": true,
         "models": [
-          { "id": "xopglm47blth2", "name": "xopglm47blth2", "contextWindow": 64000 }
+          { "id": "xopqwen35397b", "name": "xopqwen35397b", "contextWindow": 64000 }
         ]
       }
     }
