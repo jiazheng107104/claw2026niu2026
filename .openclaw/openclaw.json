@@ -14,13 +14,13 @@
   "channels": {
     "telegram": {
       "enabled": true,
-      "botToken": "8729694631:AAE8VNapw7mxWFzctImaa-5JvhgUlWMtnnU",
+      "botToken": "8253761770:AAH2vO07ygvCy7F3lZ25hu7WykBWvomOf4g",
       "dmPolicy": "open"
     }
   },
   "agents": {
     "defaults": {
-      "model": { "primary": "openai/moonshotai/kimi-k2-instruct" },
+      "model": { "primary": "openai/Qwen3-235B-A22B" },
       "tools": ["browser", "web_search", "web_fetch"],
       "sandbox": {
         "browser": { "enabled": true },
@@ -32,12 +32,12 @@
     "providers": {
       "openai": {
         "api": "openai-chat",
-        "apiKey": "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",
+        "apiKey": "sk-sp-IUWAQ8jDMud8HYEO6EdgVN7ACHD1yBaf",
         "auth": "api-key",
-        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "baseUrl": "https://aigw-gzgy2.cucloud.cn:8443/v1",
         "authHeader": true,
         "models": [
-          { "id": "moonshotai/kimi-k2-instruct", "name": "moonshotai/kimi-k2-instruct", "contextWindow": 64000 }
+          { "id": "Qwen3-235B-A22B", "name": "Qwen3-235B-A22B", "contextWindow": 64000 }
         ]
       }
     }
